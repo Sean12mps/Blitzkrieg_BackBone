@@ -1,59 +1,99 @@
 
+var events = _.clone(Backbone.Events);
 
-var Statuses        =   function(){};
+var Statuses                        =   function(){};
 
-Statuses.prototype.add          =   function( options ){
+Statuses.prototype.add              =   function( text ){
 
-                                        $.ajax({
-                                                    url:        'bone/spine.php'
-                                                ,   type:       'POST'
-                                                ,   dataType:   'json'
-                                                ,   data:   {   
-                                                                text: options.text
-                                                    }
-                                                ,   success: options.success
+                                            $.ajax({
+                                                        url         :   'bone/spine.php'
+                                                    ,   type        :   'POST'
+                                                    ,   dataType    :   'json'
+                                                    ,   data        :   { text:text }
+                                                    ,   success     :   function( data ){
+                                                                            events.trigger('status:add', data.text)
+                                                                        }
+                                            });
+                                        };
+
+
+
+
+var NewStatusView                   =   Backbone.View.extend({
+
+                                                initialize      :   function( options ){
+
+                                                                        this.statuses   =   options.statuses;
+
+                                                                        this.el         =   options.el;
+
+                                                                        // events.on('status:add', this.appendStatus, this);
+
+                                                                        events.on('status:add', this.clearInput, this);
+
+                                                                        var add         =   $.proxy(this.addStatus, this);
+
+                                                                        this.$('#theForm').submit(add);
+
+                                                                    }
+
+                                            ,   addStatus       :   function( e ){
+
+                                                    e.preventDefault();
+
+                                                    this.statuses.add( this.$('textarea').val() );
+                                                }
+
+                                            ,   clearInput      :   function(){
+
+                                                    this.$('textarea').val('');
+                                                    this.$('textarea').focus();
+                                                }
+
+                                            ,   $               :   function( selector ){
+
+                                                    return this.el.find( selector );
+                                                }
 
                                         });
-                                    };
 
 
 
-var NewStatusView   =   function(options ){
 
-                            var statuses    =   options.statuses;
+var StatusesView                    =   Backbone.View.extend({
+                                                initialize  :   function( options ){
 
-                            $('#theForm').submit( function(e){
+                                                    this.el     =   options.el;
 
-                                    e.preventDefault();
+                                                    events.on('status:add', this.appendStatus, this)
+                                                    events.on('status:add', this.removeStatus, this)
+                                                }
 
-                                    statuses.add({
-                                                    text: $('#newstatus').val()
-                                                ,   success: function(data) {
+                                            ,   appendStatus:   function( text ){
 
-                                                        /*          *\
-                                                        *   CUSTOM   *
-                                                        \*          */ 
-                                                        var alertS      =   $('#statuses').find('.alert');
+                                                    this.$('#statuses').append('<div class="alert alert-success">' + text + '</div>');
+                                                }
 
-                                                        if( alertS.length == 5 ){
+                                            ,   removeStatus:   function(){
 
-                                                            $(alertS[0]).hide('slow');
+                                                    var alertS      =   this.$('.alert');
 
-                                                            setTimeout( function(){
-                                                                $(alertS[0]).remove();
-                                                            },1000 );
-                                                        }
-                                                        /*          *\
-                                                         *  CUSTOM  *
-                                                        \*          */ 
+                                                    if( alertS.length > 3 ){
 
+                                                        $(alertS[0]).hide('fast');
 
-                                                        $('#statuses').append('<div class="alert alert-success">' + data.text + '</div>');
-                                                        $('#newstatus').val('');
+                                                        setTimeout( function(){
+                                                            $(alertS[0]).remove();
+                                                        },500 );
                                                     }
-                                    });
-                            });
-                        };
+                                                }
+
+                                            ,   $           :   function( selector ){
+
+                                                    return this.el.find( selector );
+                                                }
+                                        });
+
 
 
 
@@ -62,7 +102,14 @@ $(document).ready(function() {
 
     var statuses    =   new Statuses();
 
-    new NewStatusView({ statuses: statuses });
+    new NewStatusView( { 
+                            el          :   $('#new-status')
+                        ,   statuses    :   statuses 
+        } );
+
+    new StatusesView( {     
+                            el          :   $('#new-status')  
+        } );
 
 });
 
