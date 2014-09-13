@@ -1,46 +1,50 @@
 
-var events = _.clone(Backbone.Events);
 
 var Status                          =   Backbone.Model.extend({
                                             url     :   'bone/spine.php'
                                         });
 
-var Statuses                        =   function(){};
 
-Statuses.prototype.add              =   function( text ){
+var Statuses                        =   Backbone.Collection.extend({
+                                            // add     :   function( text ){
+                                                            
+                                            //                 var that    =   this;
+                                            //                 var status  =   new Status;
 
-                                            var status  =   new Status();
+                                            //                 status.save({ text:text }, {
+                                            //                     success     :   function( model , data ){
+                                            //                                         that.trigger("add", data.text);
+                                            //                                     }
+                                            //                 });
+                                            //             }
+                                            model   :   Status
+                                        });
 
-                                            status.save({ text:text }, { 
-                                                            success   :   function( model,  data ){
-
-                                                                events.trigger('status:add', data.text);
-                                                            }
-                                            });
-                                        };
 
 
 
 
 var NewStatusView                   =   Backbone.View.extend({
 
-                                                initialize      :   function( options ){
+                                                events          :   {
 
-                                                                        this.statuses   =   options.statuses;
+                                                                        'submit form'   :   'addStatus'
+                                                }
 
-                                                                        events.on('status:add', this.clearInput, this);
+                                            ,   initialize      :   function(  ){
 
-                                                                        var add         =   $.proxy(this.addStatus, this);
+                                                                        this.collection.on( "add", this.clearInput, this );
 
-                                                                        this.$('#theForm').submit(add);
+                                                                        // var add         =   $.proxy(this.addStatus, this);
 
+                                                                        // this.$('#theForm').submit(add);
                                                                     }
 
                                             ,   addStatus       :   function( e ){
 
                                                     e.preventDefault();
 
-                                                    this.statuses.add( this.$('textarea').val() );
+                                                    this.collection.create( { text: this.$('textarea').val() } );
                                                 }
 
                                             ,   clearInput      :   function(){
@@ -55,15 +59,15 @@ var NewStatusView                   =   Backbone.View.extend({
 
 
 var StatusesView                    =   Backbone.View.extend({
-                                                initialize  :   function( options ){
+                                                initialize  :   function(  ){
 
-                                                    events.on('status:add', this.appendStatus, this)
-                                                    events.on('status:add', this.removeStatus, this)
+                                                    this.collection.on( "add", this.appendStatus, this )
+                                                    this.collection.on( "add", this.removeStatus, this )
                                                 }
 
-                                            ,   appendStatus:   function( text ){
+                                            ,   appendStatus:   function( status ){
 
-                                                    this.$('#statuses').append('<div class="alert alert-success">' + text + '</div>');
+                                                    this.$('#statuses').append('<div class="alert alert-success">' + status.escape('text') + '</div>');
                                                 }
 
                                             ,   removeStatus:   function(){
@@ -92,11 +96,12 @@ $(document).ready(function() {
 
     new NewStatusView( { 
                             el          :   $('#new-status')
-                        ,   statuses    :   statuses 
+                        ,   collection  :   statuses 
         } );
 
     new StatusesView( {     
-                            el          :   $('#new-status')  
+                            el          :   $('#new-status')
+                        ,   collection  :   statuses
         } );
 
 });
