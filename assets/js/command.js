@@ -1,18 +1,21 @@
 
 var events = _.clone(Backbone.Events);
 
+var Status                          =   Backbone.Model.extend({
+                                            url     :   'bone/spine.php'
+                                        });
+
 var Statuses                        =   function(){};
 
 Statuses.prototype.add              =   function( text ){
 
-                                            $.ajax({
-                                                        url         :   'bone/spine.php'
-                                                    ,   type        :   'POST'
-                                                    ,   dataType    :   'json'
-                                                    ,   data        :   { text:text }
-                                                    ,   success     :   function( data ){
-                                                                            events.trigger('status:add', data.text)
-                                                                        }
+                                            var status  =   new Status();
+
+                                            status.save({ text:text }, { 
+                                                            success   :   function( model,  data ){
+
+                                                                events.trigger('status:add', data.text);
+                                                            }
                                             });
                                         };
 
@@ -24,10 +27,6 @@ var NewStatusView                   =   Backbone.View.extend({
                                                 initialize      :   function( options ){
 
                                                                         this.statuses   =   options.statuses;
-
-                                                                        this.el         =   options.el;
-
-                                                                        // events.on('status:add', this.appendStatus, this);
 
                                                                         events.on('status:add', this.clearInput, this);
 
@@ -50,11 +49,6 @@ var NewStatusView                   =   Backbone.View.extend({
                                                     this.$('textarea').focus();
                                                 }
 
-                                            ,   $               :   function( selector ){
-
-                                                    return this.el.find( selector );
-                                                }
-
                                         });
 
 
@@ -62,8 +56,6 @@ var NewStatusView                   =   Backbone.View.extend({
 
 var StatusesView                    =   Backbone.View.extend({
                                                 initialize  :   function( options ){
-
-                                                    this.el     =   options.el;
 
                                                     events.on('status:add', this.appendStatus, this)
                                                     events.on('status:add', this.removeStatus, this)
@@ -88,10 +80,6 @@ var StatusesView                    =   Backbone.View.extend({
                                                     }
                                                 }
 
-                                            ,   $           :   function( selector ){
-
-                                                    return this.el.find( selector );
-                                                }
                                         });
 
 
