@@ -102,4 +102,4 @@ $(document).ready(function() {
 });
 
 
-// Now we only bootstrap our application when the DOM is loaded, 
+// Handling several models
